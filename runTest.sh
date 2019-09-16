@@ -71,5 +71,5 @@ done
 echo "################# END of our test  #################################"
 
 else
-  echo "Looks like terraform failed to run not running post terra form tets "
+  echo "Looks like terraform failed to run not running post terra form tests "
 fi

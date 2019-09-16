@@ -1,6 +1,11 @@
 
 data "aws_availability_zones" "available" {}
 
+data "aws_subnet_ids" "sub_ids" {
+  depends_on = [aws_subnet.subnet1,aws_subnet.subnet2]
+  vpc_id = aws_vpc.w10_terraform.id
+}
+
 ##################################################################################
 # PROVIDERS
 ##################################################################################
@@ -134,9 +139,9 @@ resource "aws_security_group" "elb-sg" {
 resource "aws_elb" "web" {
   name = "nginx-elb"
 
-  subnets         = ["${aws_subnet.subnet1.id}", "${aws_subnet.subnet2.id}"]
-  security_groups = ["${aws_security_group.elb-sg.id}"]
-  instances       = ["${aws_instance.nginx1.id}", "${aws_instance.nginx2.id}"]
+  subnets         = [aws_subnet.subnet1.id, aws_subnet.subnet2.id]
+  security_groups = [aws_security_group.elb-sg.id]
+  instances       = aws_instance.nginx.*.id
 
   listener {
     instance_port     = 80
@@ -151,13 +156,64 @@ resource "aws_elb" "web" {
   }
 }
 
-resource "aws_instance" "nginx1" {
+//resource "aws_instance" "nginx1" {
+//  ami           = "ami-0b37e9efc396e4c38" # Ubuntu 16
+//  instance_type = "t2.micro"
+//  key_name        = var.key_name
+//  # Our Security group to allow HTTP and SSH access
+//  vpc_security_group_ids = [aws_security_group.nginx-sg.id]
+//  subnet_id     = aws_subnet.subnet1.id
+//
+//    ebs_block_device {
+//    device_name = "/dev/sdg"
+//    volume_size = 2
+//  }
+//
+//  connection {
+//    type = "ssh"
+//    user = "ubuntu"
+//    private_key = file(var.private_key_path)
+//    timeout = "2m"
+//    agent = false
+//    host = aws_instance.nginx1.public_dns
+//  }
+//
+//   provisioner "file" {
+//    source      = "mapEBStoDriver.sh"
+//    destination = "/tmp/mapEBStoDriver.sh"
+//  }
+//
+//  provisioner "remote-exec" {
+//    inline = [
+//      "sudo apt-get update",
+//      "sudo apt-get -y install nginx",
+//      "lsblk",
+//      "export INSTANCE_ID=$(curl --silent http://169.254.169.254/latest/meta-data/instance-id) && echo '<html><head><title>Server One</title></head><body style=\"background-color:#1F778D\"><p style=\"text-align: center;\"><span style=\"color:#FFFFFF;\"><span style=\"font-size:28px;\">Nginx server on EC2 instance ' $INSTANCE_ID ' </span></span></p></body></html>' | sudo tee /var/www/html/index.nginx-debian.html"
+//    ]
+//  }
+//
+//    provisioner "remote-exec" {
+//    inline = [
+//      "chmod +x /tmp/mapEBStoDriver.sh",
+//      "/tmp/mapEBStoDriver.sh /dev/xvdg"
+//    ]
+//  }
+//
+//  tags = {
+//    Name = "${var.environment_tag}-ec2-instance-1"
+//    Environment = var.environment_tag
+//  }
+//}
+
+resource "aws_instance" "nginx" {
+  count = var.instance_count
   ami           = "ami-0b37e9efc396e4c38" # Ubuntu 16
   instance_type = "t2.micro"
-  key_name        = "${var.key_name}"
+  key_name        = var.key_name
   # Our Security group to allow HTTP and SSH access
-  vpc_security_group_ids = ["${aws_security_group.nginx-sg.id}"]
-  subnet_id     = "${aws_subnet.subnet1.id}"
+  vpc_security_group_ids = [aws_security_group.nginx-sg.id]
+
+  subnet_id     = sort(data.aws_subnet_ids.sub_ids.ids)[count.index] #data.aws_subnet_ids.sub_ids.ids[count.index] #join("",["aws_subnet.subnet",count.index+1,".id"])
 
     ebs_block_device {
     device_name = "/dev/sdg"
@@ -167,59 +223,10 @@ resource "aws_instance" "nginx1" {
   connection {
     type = "ssh"
     user = "ubuntu"
-    private_key = "${file(var.private_key_path)}"
+    private_key = file(var.private_key_path)
     timeout = "2m"
     agent = false
-    host = aws_instance.nginx1.public_dns
-  }
-
-   provisioner "file" {
-    source      = "mapEBStoDriver.sh"
-    destination = "/tmp/mapEBStoDriver.sh"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo apt-get update",
-      "sudo apt-get -y install nginx",
-      "lsblk",
-      "export INSTANCE_ID=$(curl --silent http://169.254.169.254/latest/meta-data/instance-id) && echo '<html><head><title>Server One</title></head><body style=\"background-color:#1F778D\"><p style=\"text-align: center;\"><span style=\"color:#FFFFFF;\"><span style=\"font-size:28px;\">Nginx server on EC2 instance ' $INSTANCE_ID ' </span></span></p></body></html>' | sudo tee /var/www/html/index.nginx-debian.html"
-    ]
-  }
-
-    provisioner "remote-exec" {
-    inline = [
-      "chmod +x /tmp/mapEBStoDriver.sh",
-      "/tmp/mapEBStoDriver.sh /dev/xvdg"
-    ]
-  }
-
-  tags = {
-    Name = "${var.environment_tag}-ec2-instance-1"
-    Environment = var.environment_tag
-  }
-}
-
-resource "aws_instance" "nginx2" {
-  ami           = "ami-0b37e9efc396e4c38" # Ubuntu 16
-  instance_type = "t2.micro"
-  key_name        = "${var.key_name}"
-  # Our Security group to allow HTTP and SSH access
-  vpc_security_group_ids = ["${aws_security_group.nginx-sg.id}"]
-  subnet_id     = "${aws_subnet.subnet1.id}"
-
-    ebs_block_device {
-    device_name = "/dev/sdg"
-    volume_size = 2
-  }
-
-  connection {
-    type = "ssh"
-    user = "ubuntu"
-    private_key = "${file(var.private_key_path)}"
-    timeout = "2m"
-    agent = false
-    host = aws_instance.nginx2.public_dns
+    host =  self.public_dns #element(aws_instance.nginx.*.public_dns,count.index) #aws_instance.nginx2.public_dns
   }
 
   //
@@ -250,7 +257,7 @@ resource "aws_instance" "nginx2" {
   }
 
   tags = {
-    Name = "${var.environment_tag}-ec2-instance-2"
+    Name = join("",[var.environment_tag,"-ec",count.index,"-",count.index]) #"${var.environment_tag}-ec2-instance-2"
     Environment = var.environment_tag
   }
 }
