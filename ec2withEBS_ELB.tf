@@ -2,8 +2,8 @@
 data "aws_availability_zones" "available" {}
 
 data "aws_subnet_ids" "sub_ids" {
-  depends_on = [aws_subnet.subnet1,aws_subnet.subnet2]
-  vpc_id = aws_vpc.w10_terraform.id
+  depends_on = [aws_subnet.subnet1, aws_subnet.subnet2]
+  vpc_id     = aws_vpc.w10_terraform.id
 }
 
 ##################################################################################
@@ -12,7 +12,7 @@ data "aws_subnet_ids" "sub_ids" {
 
 provider "aws" {
   access_key = var.aws_access_key
-  secret_key = "${var.aws_secret_key}"
+  secret_key = var.aws_secret_key
   region     = var.aws_region
 }
 
@@ -21,61 +21,61 @@ provider "aws" {
 ##################################################################################
 
 resource "aws_vpc" "w10_terraform" {
-  cidr_block = var.network_address_space
+  cidr_block           = var.network_address_space
   enable_dns_hostnames = "true"
 
-    tags = {
-    Name = "${var.environment_tag}-vpc"
+  tags = {
+    Name        = "${var.environment_tag}-vpc"
     Environment = var.environment_tag
   }
 
 }
 
 resource "aws_internet_gateway" "default" {
-  vpc_id = "${aws_vpc.w10_terraform.id}"
+  vpc_id = aws_vpc.w10_terraform.id
 }
 
 resource "aws_subnet" "subnet1" {
-  cidr_block        = "${var.subnet1_address_space}"
-  vpc_id            = "${aws_vpc.w10_terraform.id}"
+  cidr_block              = var.subnet1_address_space
+  vpc_id                  = aws_vpc.w10_terraform.id
   map_public_ip_on_launch = "true"
-  availability_zone = "${data.aws_availability_zones.available.names[0]}"
+  availability_zone       = data.aws_availability_zones.available.names[0]
 
 }
 
 resource "aws_subnet" "subnet2" {
-  cidr_block        = "${var.subnet2_address_space}"
-  vpc_id            = "${aws_vpc.w10_terraform.id}"
+  cidr_block              = var.subnet2_address_space
+  vpc_id                  = aws_vpc.w10_terraform.id
   map_public_ip_on_launch = "true"
-  availability_zone = "${data.aws_availability_zones.available.names[1]}"
+  availability_zone       = data.aws_availability_zones.available.names[1]
 
 }
 
 # ROUTING #
 resource "aws_route_table" "rtb" {
-  vpc_id = "${aws_vpc.w10_terraform.id}"
+  vpc_id = aws_vpc.w10_terraform.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = "${aws_internet_gateway.default.id}"
+    gateway_id = aws_internet_gateway.default.id
   }
 }
 
 resource "aws_route_table_association" "rta-subnet1" {
-  subnet_id      = "${aws_subnet.subnet1.id}"
-  route_table_id = "${aws_route_table.rtb.id}"
+  subnet_id      = aws_subnet.subnet1.id
+  route_table_id = aws_route_table.rtb.id
 }
 
 resource "aws_route_table_association" "rta-subnet2" {
-  subnet_id      = "${aws_subnet.subnet2.id}"
-  route_table_id = "${aws_route_table.rtb.id}"
+  subnet_id      = aws_subnet.subnet2.id
+  route_table_id = aws_route_table.rtb.id
 }
 
 # Our default security group to access
 # the instances over SSH and HTTP
 resource "aws_security_group" "nginx-sg" {
-  name        = "nginx_sg"
-  vpc_id      = "${aws_vpc.w10_terraform.id}"
+  name   = "nginx_sg"
+  vpc_id = aws_vpc.w10_terraform.id
 
 
   # SSH access from anywhere
@@ -103,15 +103,15 @@ resource "aws_security_group" "nginx-sg" {
   }
 
   tags = {
-    Name = "${var.environment_tag}-sg"
+    Name        = "${var.environment_tag}-sg"
     Environment = var.environment_tag
   }
 }
 
 # SECURITY GROUPS #
 resource "aws_security_group" "elb-sg" {
-  name        = "nginx_elb_sg"
-  vpc_id      = "${aws_vpc.w10_terraform.id}"
+  name   = "nginx_elb_sg"
+  vpc_id = aws_vpc.w10_terraform.id
 
   #Allow HTTP from anywhere
   ingress {
@@ -128,8 +128,8 @@ resource "aws_security_group" "elb-sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-    tags = {
-    Name = "${var.environment_tag}-elb-sg"
+  tags = {
+    Name        = "${var.environment_tag}-elb-sg"
     Environment = var.environment_tag
   }
 
@@ -150,8 +150,8 @@ resource "aws_elb" "web" {
     lb_protocol       = "http"
   }
 
-    tags = {
-    Name = "${var.environment_tag}-elb"
+  tags = {
+    Name        = "${var.environment_tag}-elb"
     Environment = var.environment_tag
   }
 }
@@ -206,31 +206,31 @@ resource "aws_elb" "web" {
 //}
 
 resource "aws_instance" "nginx" {
-  count = var.instance_count
+  count         = var.instance_count
   ami           = "ami-0b37e9efc396e4c38" # Ubuntu 16
   instance_type = "t2.micro"
-  key_name        = var.key_name
+  key_name      = var.key_name
   # Our Security group to allow HTTP and SSH access
   vpc_security_group_ids = [aws_security_group.nginx-sg.id]
 
-  subnet_id     = sort(data.aws_subnet_ids.sub_ids.ids)[count.index] #data.aws_subnet_ids.sub_ids.ids[count.index] #join("",["aws_subnet.subnet",count.index+1,".id"])
+  subnet_id = sort(data.aws_subnet_ids.sub_ids.ids)[count.index] #data.aws_subnet_ids.sub_ids.ids[count.index] #join("",["aws_subnet.subnet",count.index+1,".id"])
 
-    ebs_block_device {
+  ebs_block_device {
     device_name = "/dev/sdg"
     volume_size = 2
   }
 
   connection {
-    type = "ssh"
-    user = "ubuntu"
+    type        = "ssh"
+    user        = "ubuntu"
     private_key = file(var.private_key_path)
-    timeout = "2m"
-    agent = false
-    host =  self.public_dns #element(aws_instance.nginx.*.public_dns,count.index) #aws_instance.nginx2.public_dns
+    timeout     = "2m"
+    agent       = false
+    host        = self.public_dns #element(aws_instance.nginx.*.public_dns,count.index) #aws_instance.nginx2.public_dns
   }
 
   //
-   provisioner "file" {
+  provisioner "file" {
     source      = "./provisioners/mapEBStoDriver.sh"
     destination = "/tmp/mapEBStoDriver.sh"
   }
@@ -249,7 +249,7 @@ resource "aws_instance" "nginx" {
     ]
   }
 
-    provisioner "remote-exec" {
+  provisioner "remote-exec" {
     inline = [
       "chmod +x /tmp/mapEBStoDriver.sh",
       "/tmp/mapEBStoDriver.sh /dev/xvdg"
@@ -257,7 +257,7 @@ resource "aws_instance" "nginx" {
   }
 
   tags = {
-    Name = join("",[var.environment_tag,"-ec",count.index,"-",count.index]) #"${var.environment_tag}-ec2-instance-2"
+    Name        = join("", [var.environment_tag, "-ec", count.index, "-", count.index]) #"${var.environment_tag}-ec2-instance-2"
     Environment = var.environment_tag
   }
 }
