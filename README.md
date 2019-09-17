@@ -23,3 +23,5 @@
           - remote-exe - run above Shell script that does volume mounting . 
   -   Once two E2 instance has been created - run bash script that will make sure ELB is running and two EC2 instances are accesable and were created  
       via this terrafrom script 
+      
+      
