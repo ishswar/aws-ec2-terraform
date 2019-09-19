@@ -45,6 +45,10 @@
   Details about how we are planing to build all needed AWS Resources to get to above destination
   
   ![AWS terraform](demo-images/AWS-terraform.png) 
+  
+  Dependency graph created by Terraform (```terraform graph | do -Tpng > <file>.png```)
+  
+  ![terraform graph](demo-images/terraform_in_action_aws.png)
 
 # Demo in action 
 
