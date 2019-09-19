@@ -56,6 +56,10 @@
   
   ![demo-gif](demo-images/terraform_in_action.gif)
   
+  ## Full Demo
+  
+  [![asciicast](https://asciinema.org/a/269723.svg)](https://asciinema.org/a/269723)
+  
   After demo you can see ELB is hitting both the EC2 instances - we can confirm by data coming back - Each server is sending its EC2 instance back as index.htm/l
   
   ![Output-Animation](demo-images/nginx-landing-page-animation.gif)
