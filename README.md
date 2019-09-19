@@ -1,5 +1,18 @@
 # aws-ec2-terraform
 
+- [aws-ec2-terraform](#aws-ec2-terraform)
+- [Introduction](#introduction)
+- [Demo layout](#demo-layout)
+- [Final destination](#final-destination)
+- [Terraform - Detail plan about how to get to destination](#terraform---detail-plan-about-how-to-get-to-destination)
+- [Demo in action](#demo-in-action)
+  * [Full Demo](#full-demo)
+- [Complete output](#complete-output)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
+
+
 # Introduction 
 
   **Terraform provider for this sample is AWS**
