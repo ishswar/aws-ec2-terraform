@@ -1,5 +1,4 @@
 
-- [aws-ec2-terraform](#aws-ec2-terraform)
 - [Introduction](#introduction)
 - [Demo layout](#demo-layout)
 - [Final destination](#final-destination)
