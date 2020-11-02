@@ -52,7 +52,7 @@ systemctl restart docker
 
 #### End Docker
 
-apt-get install bash-completion
+apt-get install -y bash-completion
 source /usr/share/bash-completion/bash_completion
 
 apt-get install -y apt-transport-https
