@@ -2,9 +2,9 @@
 
 set -x
 
-apt-get update
-apt-get upgrade
-apt-get install curl
+apt-get -y update
+apt-get -y upgrade
+apt-get -y install curl
 
 # Check VXLAN exists
 curl -sSL https://raw.githubusercontent.com/docker/docker/master/contrib/check-config.sh | bash
