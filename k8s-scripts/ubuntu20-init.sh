@@ -71,7 +71,7 @@ echo "source <(kubeadm completion bash);source <(kubectl completion bash);alias 
 sudo kubeadm init --pod-network-cidr=10.240.0.0/16 | tee /root/kubeadm-init-output.txt
 
 mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo cp -rf /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 curl https://docs.projectcalico.org/manifests/calico.yaml -O
