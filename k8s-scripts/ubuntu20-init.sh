@@ -67,13 +67,23 @@ EOF
 apt-get update
 apt-get install -y kubelet kubeadm kubectl
 
-echo "source <(kubeadm completion bash);source <(kubectl completion bash);alias nano='nano -cmET4';echo 'Hello k8s'" >> ~/.bashrc
+echo "source <(kubeadm completion bash);source <(kubectl completion bash);alias nano='nano -cmET4';echo 'Hello k8s';source /usr/share/bash-completion/bash_completion" >> ~/.bashrc
 sudo kubeadm init --pod-network-cidr=10.240.0.0/16 | tee /root/kubeadm-init-output.txt
 
 mkdir -p $HOME/.kube
 sudo cp -rf /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
+mkdir -p /root/.kube
+sudo cp -rf /etc/kubernetes/admin.conf /root/.kube/config
+sudo chown $(id -u):$(id -g) /root/.kube/config
+
+mkdir -p /home/ubuntu/.kube
+sudo cp -rf /etc/kubernetes/admin.conf /home/ubuntu/.kube/config
+sudo chown $(id -u):$(id -g) /home/ubuntu/.kube/config
+echo "source <(kubeadm completion bash);source <(kubectl completion bash);alias nano='nano -cmET4';echo 'Hello k8s and ubuntu user';source /usr/share/bash-completion/bash_completion" >> /home/ubuntu/.bashrc
+
 curl https://docs.projectcalico.org/manifests/calico.yaml -O
 
 kubectl apply -f calico.yaml
+kubectl taint node ip-10-0-1-148 node-role.kubernetes.io/master:NoSchedule-
